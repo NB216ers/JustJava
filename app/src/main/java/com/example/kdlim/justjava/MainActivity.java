@@ -1,5 +1,7 @@
 package com.example.kdlim.justjava;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -7,22 +9,31 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * This app displays an order form to order coffee.
  */
 public class MainActivity extends AppCompatActivity {
 
+    int quantity = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
-    int quantity = 0;
+
     /**
      * This method is called when the plus button is clicked.
      */
     public void increment (View view) {
+        if (quantity == 100) {
+            //show an error message as a toast
+            Toast.makeText(this, "You connot have more than 100 coffees", Toast.LENGTH_LONG).show();
+            // Exit this method early because there's nothing left to do
+            return;
+        }
         quantity = quantity + 1;
         display(quantity);
     }
@@ -36,18 +47,33 @@ public class MainActivity extends AppCompatActivity {
        // Figure out if the user wants chocolate topping
         CheckBox chocolateCheckBox = (CheckBox)findViewById(R.id.chocolate_checkbox);
         boolean hasChocolate = chocolateCheckBox.isChecked();
-        Log.v("MainActivity","Has whipped crea :" + hasWhippedCream + "\n has chocolate :" + hasChocolate);
+        Log.v("MainActivity", "Has whipped crea :" + hasWhippedCream + "\n has chocolate :" + hasChocolate);
         //  Get text from edittext
         EditText NameField = (EditText)findViewById(R.id.name_field);
         String name = NameField.getText().toString();
         Log.v("MainActivity","NameField: " + name);
-        int price = calculatePrice(hasWhippedCream,hasChocolate);
-        displayMessage(createOrderSummary(name,price,hasWhippedCream,hasChocolate));
+        int price = calculatePrice(hasWhippedCream, hasChocolate);
+         String priceMessage = createOrderSummary(name, price, hasWhippedCream, hasChocolate);
+
+        Intent intent = new Intent(Intent.ACTION_SENDTO);
+        intent.setData(Uri.parse("mailto:")); // only email apps should handle this
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Just Java order for " + name);
+        intent.putExtra(Intent.EXTRA_TEXT, priceMessage);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
+
     }
     /**
      * This method is called when the minus button is clicked.
      */
     public void decrement (View view) {
+        if (quantity == 1) {
+            //show an error message as a toast
+            Toast.makeText(this, "You connot have less than 1 cup of coffee", Toast.LENGTH_LONG).show();
+            // Exit this method early because there's nothing left to do
+            return;
+        }
         quantity =quantity - 1;
         display(quantity);
     }
@@ -62,27 +88,20 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * This method displays the given text on the screen.
-     */
-    private void displayMessage(String message) {
-        TextView orderSummaryTextView = (TextView) findViewById(R.id.order_summary_text_view);
-        orderSummaryTextView.setText(message);
-    }
-    /**
      * Calculates the price of the order
      * @return total price
      * @param addWhippedCream is whether or not the user wants whipping cream topping
      * @param addChotolate  is whether or not the user wants chotolate topping
      */
-    private int calculatePrice(boolean addWhippedCream,boolean addChotolate){
+    private int calculatePrice(boolean addWhippedCream, boolean addChotolate) {
         // price of 1 cup of coffee
         int basePrice = 5;
         // add 1$ if the user wants whipped cream
-        if(addWhippedCream){
+        if (addWhippedCream) {
             basePrice = basePrice + 1;
         }
         //add 2$ if the user wants chotolate
-        if (addChotolate){
+        if (addChotolate) {
             basePrice = basePrice + 2;
         }
 
